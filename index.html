@@ -1,0 +1,294 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+ content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050b14">
+<title>JARVIS AI</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(
+    circle at 50% 25%, #102b43, #050912 65%);
+  color: #8eeaff;
+  font-family: system-ui, sans-serif;
+}
+header {
+  text-align: center;
+  padding: 22px 10px 8px;
+  letter-spacing: 5px;
+}
+header h1 {
+  margin: 0;
+  font-size: 30px;
+  text-shadow: 0 0 18px #00cfff;
+}
+header p { font-size: 11px; letter-spacing: 3px; }
+.core {
+  width: 174px;
+  height: 174px;
+  margin: 18px auto;
+  border: 2px solid #28cfff;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 18px #008cff,
+    inset 0 0 25px #0077aa;
+  position: relative;
+  animation: pulse 3s infinite ease-in-out;
+}
+.core::before, .core::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1px dashed #7deaff;
+  border-radius: 50%;
+  animation: spin 12s linear infinite;
+}
+.core::after {
+  inset: 27px;
+  border-style: solid;
+  animation-direction: reverse;
+  animation-duration: 8s;
+}
+.core span {
+  font-size: 39px;
+  text-shadow: 0 0 20px #00cfff;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse {
+  50% { box-shadow: 0 0 32px #008cff,
+    inset 0 0 38px #0077aa; }
+}
+.status {
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin: 12px;
+}
+.panel {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 14px;
+}
+#chat {
+  height: 210px;
+  overflow-y: auto;
+  border: 1px solid #16445c;
+  border-radius: 12px;
+  background: #06111cbb;
+  padding: 12px;
+}
+.msg { margin: 0 0 12px; line-height: 1.5;
+  overflow-wrap: anywhere; }
+.msg b { color: #35d8ff; }
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+input {
+  min-width: 0;
+  flex: 1;
+  background: #081725;
+  border: 1px solid #1c6683;
+  border-radius: 9px;
+  padding: 13px;
+  color: white;
+  font-size: 16px;
+}
+button {
+  border: 1px solid #27cfff;
+  border-radius: 9px;
+  background: #08253a;
+  color: #a5f1ff;
+  padding: 11px 14px;
+  font-size: 15px;
+}
+button:active { background: #12516d; }
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0;
+}
+footer {
+  text-align: center;
+  font-size: 10px;
+  color: #528da7;
+  padding: 12px;
+}
+</style>
+</head>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#050b14">
+
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#050b14">
+
+<body>
+<header>
+  <h1>J.A.R.V.I.S.</h1>
+  <p>JUST A RATHER VERY INTELLIGENT SYSTEM</p>
+</header>
+
+<div class="core"><span>J</span></div>
+<div class="status" id="status">SISTEMA EN ESPERA</div>
+
+<main class="panel">
+  <div id="chat" aria-live="polite"></div>
+
+  <div class="controls">
+    <input id="input" placeholder="Escribe a JARVIS..."
+      autocomplete="off">
+    <button id="send">Enviar</button>
+  </div>
+
+  <div class="tools">
+    <button id="mic">🎙 Hablar</button>
+    <button id="mute">🔊 Voz: ON</button>
+    <button id="clear">Limpiar chat</button>
+  </div>
+</main>
+
+<footer>JARVIS PERSONAL AI · PROTOTIPO 01</footer>
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const statusText = document.getElementById("status");
+let voiceOn = true;
+
+function addMessage(who, text) {
+  const row = document.createElement("p");
+  row.className = "msg";
+  const label = document.createElement("b");
+  label.textContent = who + ": ";
+  row.append(label, document.createTextNode(text));
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function speak(text) {
+  if (!voiceOn || !("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "es-MX";
+  utterance.rate = 1;
+  speechSynthesis.speak(utterance);
+}
+
+function reply(text) {
+  addMessage("JARVIS", text);
+  statusText.textContent = "SISTEMA ACTIVO";
+  speak(text);
+}
+
+function handleCommand(raw) {
+  const text = raw.trim();
+  if (!text) return;
+
+  addMessage("TÚ", text);
+  input.value = "";
+  const q = text.toLowerCase();
+  let answer;
+
+  if (q.includes("hola")) {
+    answer = "Hola. Sistemas en línea. ¿En qué puedo ayudarte?";
+  } else if (q.includes("tu nombre") || q.includes("quién eres")) {
+    answer = "Soy JARVIS, tu asistente personal en desarrollo.";
+  } else if (q.includes("hora")) {
+    answer = "La hora de tu dispositivo es " +
+      new Date().toLocaleTimeString("es-MX",
+      {hour: "2-digit", minute: "2-digit"});
+  } else if (q.includes("fecha") || q.includes("día es")) {
+    answer = "Hoy es " +
+      new Date().toLocaleDateString("es-MX",
+      {weekday:"long", day:"numeric", month:"long", year:"numeric"});
+  } else if (q.includes("cómo estás")) {
+    answer = "Todos mis sistemas están listos para ayudarte.";
+  } else if (q.includes("ayuda") || q.includes("comandos")) {
+    answer = "Puedes decir hola, preguntar la hora, la fecha, " +
+      "o preguntar quién soy. Mi inteligencia avanzada aún no está conectada.";
+  } else {
+    answer = "He recibido tu mensaje. Todavía necesito conectar " +
+      "un modelo de inteligencia artificial para responder preguntas abiertas.";
+  }
+
+  reply(answer);
+}
+
+document.getElementById("send").addEventListener("click", () => {
+  handleCommand(input.value);
+});
+
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") handleCommand(input.value);
+});
+
+document.getElementById("mute").addEventListener("click", () => {
+  voiceOn = !voiceOn;
+  document.getElementById("mute").textContent =
+    voiceOn ? "🔊 Voz: ON" : "🔇 Voz: OFF";
+  if (!voiceOn && "speechSynthesis" in window) {
+    speechSynthesis.cancel();
+  }
+});
+
+document.getElementById("clear").addEventListener("click", () => {
+  chat.replaceChildren();
+});
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+document.getElementById("mic").addEventListener("click", () => {
+  if (!SpeechRecognition) {
+    reply("El reconocimiento de voz no está disponible en este navegador. " +
+      "Prueba Chrome actualizado o utiliza el teclado por ahora.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "es-MX";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    statusText.textContent = "ESCUCHANDO...";
+  };
+
+  recognition.onresult = event => {
+    const words = event.results[0][0].transcript;
+    handleCommand(words);
+  };
+
+  recognition.onerror = () => {
+    statusText.textContent = "NO SE PUDO ESCUCHAR";
+  };
+
+  recognition.onend = () => {
+    if (statusText.textContent === "ESCUCHANDO...") {
+      statusText.textContent = "SISTEMA EN ESPERA";
+    }
+  };
+
+  try {
+    recognition.start();
+  } catch {
+    statusText.textContent = "INTENTA DE NUEVO";
+  }
+});
+
+addMessage("JARVIS",
+  "Buenos días. Estoy iniciando mis sistemas. Escribe o pulsa Hablar.");
+</script>
+</body>
+</html>
